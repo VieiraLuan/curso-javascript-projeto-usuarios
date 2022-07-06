@@ -2,11 +2,13 @@ class UserController {
 
 
 
-    constructor(formId, idTableUsers) {
+    constructor(formId, idTableUsers, formIdUpdate) {
         this.formElement = document.getElementById(formId);
+        this.formElementUpdate = document.getElementById(formIdUpdate);
         this.tableUsersElement = document.getElementById(idTableUsers);
         this.onSubmit();
         this.onEditCancel();
+        this.onEdit();
     }
 
     onEditCancel() {
@@ -40,7 +42,7 @@ class UserController {
             btn.disabled = true;
 
 
-            let values = this.getValues();
+            let values = this.getValues(this.formElement, "add");
 
             if (!values == false) {
 
@@ -53,7 +55,7 @@ class UserController {
                         this.formElement.reset();
                     },
                     (e) => {
-                        console.error(e);
+
                     }
                 );
             }
@@ -64,29 +66,6 @@ class UserController {
 
         });
 
-
-
-        document.getElementById("btnUpdateAndSave").addEventListener('click', e => {
-            console.log("to no update");
-            e.preventDefault();
-            let values = this.getValues("btnUpdateAndSave");
-            console.log("Veja os Values" + values);
-
-
-            if (!values == false) {
-
-                /*Save alter aqui, trocar retorno do getvaleus dentro do get valeus */
-                this.addLine(values);
-
-                // this.updateformElement.reset
-                // this.formElement.reset();
-
-
-            }
-
-        });
-
-
     }
 
     getPhoto() {
@@ -96,6 +75,7 @@ class UserController {
 
             let elements = [...this.formElement.elements].filter(item => {
                 if (item.name === 'photo') {
+
                     return item;
                 }
             });
@@ -121,30 +101,64 @@ class UserController {
 
     }
 
+    onEdit() {
+
+        this.formElementUpdate.addEventListener('submit', e => {
+            e.preventDefault();
+            let btn = document.getElementById("btnUpdateAndSave");
+            // btn.disabled = true;
+            let values = this.getValues(this.formElementUpdate, "update");
 
 
-    getValues(parameter) {
+
+            // Pega a linha do dataSet
+            let index = this.formElement.dataset.trIndex;
+
+            let tr = this.tableUsersElement.rows[index];
+
+            tr.innerHTML = ` 
+                      <td><img src=${values.photo} alt="User Image" class="img-circle img-sm"></td>
+                      <td id="tdName" >${values.name}</td>
+                      <td id="tdEmail" >${values.email}</td>
+                      <td id="tdChkAdmin" >${values.admin}</td>
+                      <td>${values.registerDate}  </td>
+                      <td>
+                        <button type="button" id="btn-editar" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
+                        <button type="button" id="btn-exclui" class="btn btn-danger btn-xs btn-flat">Excluir</button>
+                      </td>
+                    `;
+
+
+            this.formElementUpdate.reset();
+
+
+
+
+        });
+    }
+
+    getValues(form, operation) {
 
         let user = {}; // Meu Json
         let objUser = new User();
         let isValid = true;
-        let whatElement = this.formElement;
+        let changeInput = "exampleInputAdmin";
 
-        if (parameter == "btnUpdateAndSave") {
 
-            whatElement == document.getElementById("form-user-update");
-        } else if (parameter == "") {
 
-            whatElement = this.formElement;
-        }
-        // Array.from(this.formElement.elements).forEach(function (field, index)
-        Array.from(whatElement.elements).forEach(function (field, index) {
 
-            if (['name', 'email', 'password'].indexOf(field.name) > -1 && !field.value) {
-                field.parentElement.classList.add('has-error');
-                isValid = false;
-                return false;
+        Array.from(form.elements).forEach(function (field, index) {
+
+            if (operation != "update") {
+
+                if (['name', 'email', 'password'].indexOf(field.name) > -1 && !field.value) {
+                    field.parentElement.classList.add('has-error');
+                    isValid = false;
+                    return false;
+                }
             }
+
+
 
             if (field.name == "gender") {
                 // Pegue apenas o campo checado
@@ -153,11 +167,12 @@ class UserController {
                     user[field.name] = field.value;
                 }
 
-
-
             } else if (field.name == "admin") {
                 // Determinando qual tipo de usuario
-                if (objUser.isAdmin("exampleInputAdmin") == true) {
+                if (operation == "update") {
+                    changeInput = "exampleInputAdminUp";
+                }
+                if (objUser.isAdmin(changeInput) == true) {
                     field.value = "Administrador";
                     user[field.name] = field.value;
                     // Alterando o numero de usuarios
@@ -182,13 +197,14 @@ class UserController {
             } else {
                 // obj,[nome do campo] = o valor do campo
                 // aqui temos a chave e na frente o valor dessa chave
-                console.log(field.value);
+
                 user[field.name] = field.value;
             }
 
 
 
         });
+
 
         if (!isValid) {
             return false;
@@ -208,25 +224,44 @@ class UserController {
 
         let tr = document.createElement('tr');
 
+
+
         tr.innerHTML = ` 
                       <td><img src=${dataUser.photo} alt="User Image" class="img-circle img-sm"></td>
                       <td id="tdName" >${dataUser.name}</td>
                       <td id="tdEmail" >${dataUser.email}</td>
                       <td id="tdChkAdmin" >${dataUser.admin}</td>
                       <td>${dataUser.registerDate}  </td>
-                      <td>
-                        <button type="button" id="btn-editar" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
-                        <button type="button" id="btn-excluir" class="btn btn-danger btn-xs btn-flat">Excluir</button>
-                      </td>
+                      
+                        <td><button type="button" id="btn-editar" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button></td>
+                        <td id="btn-exclui"><button type="button"  class="btn btn-danger btn-xs btn-flat">Excluir</button></td>
+                      
                     `;
+
+
 
         tr.querySelector(".btn-edit").addEventListener("click", (e) => {
 
             let elements = tr.querySelectorAll('td');
 
+            /*Carrega a linha no data set*/
+            this.formElement.dataset.trIndex = tr.sectionRowIndex;
+
             this.changePainel(true);
 
             Array.from(elements).forEach(e => {
+                if (e.id == "btn-exclui") {
+
+                    e.addEventListener("click", e => {
+
+                        let index = this.formElement.dataset.trIndex;
+                        let line = this.tableUsersElement.rows[index];
+                        document.getElementById('table-users').deleteRow(line);
+                        this.changePainel(true);
+                        this.formElementUpdate.reset();
+                    });
+
+                }
                 if (e.id == "tdName") {
                     document.getElementById("exampleInputNameUp").value = (dataUser.name);
                 } else if (e.id == "tdEmail") {
@@ -257,10 +292,33 @@ class UserController {
                 document.getElementById("exampleInputBirthUp").value = (dataUser.birth);
                 document.getElementById("exampleInputCountryUp").value = (dataUser.country);
                 document.getElementById("exampleInputPasswordUp").value = (dataUser.password);
+                // document.getElementById("exampleInputFileUp").src = tr.querySelector(".img-circle").src;
+
 
 
             });
+
+            let objUser = new User();
+
+            if (document.getElementById("exampleInputAdminUp").checked == true) {
+
+                objUser.updateFieldsUserAdmUp("numAdm");
+                objUser.updateFieldsUserAdmUp("numUser");
+
+            } else {
+
+                objUser.updateFieldsUserAdmUp("numUser");
+            }
+
         });
+
+
+
+
+
+
+
+
 
 
         this.tableUsersElement.appendChild(tr);

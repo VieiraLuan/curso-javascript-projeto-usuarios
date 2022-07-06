@@ -111,11 +111,22 @@ class User {
         }
     }
 
-    updateFieldsUserAdm(value) {
+    updateFieldsUserAdmUp(value) {
 
+        let numOfUsers = document.getElementById(value).innerHTML;
+        let atual = parseInt(numOfUsers) - 1;
+        document.getElementById(value).innerHTML = atual;
+
+    }
+
+   
+
+    updateFieldsUserAdm(value) {
         let numOfUsers = document.getElementById(value).innerHTML;
         let atual = parseInt(numOfUsers) + 1;
         document.getElementById(value).innerHTML = atual;
+
+        /*stop */
     }
 
 
